@@ -10,8 +10,6 @@ PROXIES = os.getenv("PROXIES", "")
 if PROXIES:
     PROXIES = PROXIES.replace(" ", "").split(",")
 
-INTERVAL_MINUTES = int(os.getenv("INTERVAL_MINUTES", "10"))
-
 FTP_HOST = os.getenv("FTP_HOST", "")
 FTP_USER = os.getenv("FTP_USER", "")
 FTP_PASS = os.getenv("FTP_PASS", "")
