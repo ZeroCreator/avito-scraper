@@ -17,6 +17,7 @@ class Item:
     url: str
     attrs: dict
 
+
     def __eq__(self, other) -> bool:
         """Переопределенный метод для возможности формирования сетов товаров."""
         if isinstance(other, Item):
@@ -24,6 +25,7 @@ class Item:
                 other.article,
             )
         return False
+
 
     def __hash__(self) -> int:
         """Переопределенный метод для возможности формирования сетов товаров."""
@@ -41,7 +43,8 @@ def init_schema() -> None:
                 name TEXT NOT NULL,
                 article BIGINT UNIQUE NOT NULL,
                 url TEXT NOT NULL,
-                attrs JSONB NOT NULL
+                attrs JSONB NOT NULL,
+                created_at TIMESTAMP DEFAULT NOW() NOT NULL
             );
         """)
         connection.commit()
@@ -49,7 +52,7 @@ def init_schema() -> None:
 
 def mogrify_items(cursor, items: Iterable[Item]):
     """Формирует список вставляемых значений в базу данных.
-    Данный метод является значительно более производительым по сравению с cursor.executemany.
+    Данный метод является значительно более производительным по сравению с cursor.executemany.
     """
     for item in items:
         yield cursor.mogrify(
@@ -61,22 +64,36 @@ def mogrify_items(cursor, items: Iterable[Item]):
 def insert_items(items: Iterable[Item]) -> None:
     """Заносит список товаров в базу данных."""
     logging.info(f"Попытка вставить {len(items)} товаров в базу данных.")
+
+    if not items:
+        logging.error("Ошибка: список товаров пуст.")
+        return  # Завершение выполнения функции, если список пуст
+
     with psycopg.connect(settings.PG_DSN) as connection, psycopg.ClientCursor(
         connection,
     ) as cursor:
-        if not items:
-            print("Ошибка: список товаров пуст.")
-            return  # Завершение выполнения функции, если список пуст
-        values = ",".join(mogrify_items(cursor, items))
+        # Удаляем дубликаты
+        unique_data = {item.article: item for item in items}.values()  # item.article — это уникальный идентификатор
+
+        # Формируем строки для вставки
+        insert_values = []
+        for item in unique_data:
+            # Преобразуем attrs в строку JSON
+            attrs_json = json.dumps(item.attrs) if isinstance(item.attrs, dict) else item.attrs
+            insert_values.append((item.name, item.article, item.url, attrs_json))
+
         try:
-            cursor.execute(
-                f"""INSERT INTO items (name, article, url, attrs) VALUES {values}
+            cursor.executemany(
+                """INSERT INTO items (name, article, url, attrs) 
+                VALUES (%s, %s, %s, %s)
                 ON CONFLICT (article) DO UPDATE SET
                 name = EXCLUDED.name,
                 url = EXCLUDED.url,
-                attrs = EXCLUDED.attrs"""
+                attrs = EXCLUDED.attrs""",
+                insert_values
             )
         except Exception as e:
             logging.error(f"Ошибка при вставке данных: {e}")
-        connection.commit()
-
+            connection.rollback()  # Откат транзакции в случае ошибки
+        else:
+            connection.commit()  # Подтверждение транзакции только в случае успеха

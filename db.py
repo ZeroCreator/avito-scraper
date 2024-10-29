@@ -2,19 +2,29 @@ import psycopg
 import logging
 
 
-# def truncate_table(table_name, dsn):
-#     with psycopg.connect(dsn) as conn:
-#         with conn.cursor() as cur:
-#             cur.execute('SELECT * FROM items;')
-#             # cur.execute(f'TRUNCATE TABLE {table_name};')
-#             # print(f'Все данные из таблицы {table_name} успешно удалены.')
-#             data = cur.fetchall()
-#             if not data:
-#                 print("Нет товаров для записи.")  # Сообщение, если товаров нет
-#             print(data)
-#
-# truncate_table("items", "postgresql://postgres:postgres@127.0.0.1:5432/postgres")
+def select_items(table_name, dsn):
+    with psycopg.connect(dsn) as conn:
+        with conn.cursor() as cur:
+            cur.execute('SELECT COUNT(*) FROM items;')
+            data = cur.fetchall()
+            if not data:
+                logging.info("Нет товаров для записи.")  # Сообщение, если товаров нет
+            print(data)
 
+select_items("items", "postgresql://postgres:postgres@127.0.0.1:5432/postgres")
+
+def truncate_table(table_name, dsn):
+    with psycopg.connect(dsn) as conn:
+        with conn.cursor() as cur:
+            cur.execute('SELECT * FROM items;')
+            # cur.execute(f'TRUNCATE TABLE {table_name};')
+            # print(f'Все данные из таблицы {table_name} успешно удалены.')
+            data = cur.fetchall()
+            if not data:
+                print("Нет товаров для записи.")  # Сообщение, если товаров нет
+            print(data)
+
+# truncate_table("items", "postgresql://postgres:postgres@127.0.0.1:5432/postgres")
 
 def drop_table(table_name, dsn):
     with psycopg.connect(dsn) as conn:
@@ -24,4 +34,4 @@ def drop_table(table_name, dsn):
 
 
 # Пример использования
-drop_table("items", "postgresql://postgres:postgres@127.0.0.1:5432/postgres")
+#drop_table("items", "postgresql://postgres:postgres@127.0.0.1:5432/postgres")

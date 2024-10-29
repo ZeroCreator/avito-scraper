@@ -9,7 +9,3 @@ if AVITO_URLS:
 PROXIES = os.getenv("PROXIES", "")
 if PROXIES:
     PROXIES = PROXIES.replace(" ", "").split(",")
-
-FTP_HOST = os.getenv("FTP_HOST", "")
-FTP_USER = os.getenv("FTP_USER", "")
-FTP_PASS = os.getenv("FTP_PASS", "")

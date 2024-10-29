@@ -9,6 +9,4 @@ def get_proxy():
     if not settings.PROXIES:
         logging.info('None')
         return None
-    proxy = secrets.choice(settings.PROXIES)
-    logging.info(proxy)
-    return proxy
+    return secrets.choice(settings.PROXIES)

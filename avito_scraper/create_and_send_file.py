@@ -9,7 +9,13 @@ from avito_scraper import settings
 def gen_file():
     with closing(psycopg.connect(settings.PG_DSN)) as conn, closing(conn.cursor()) as cursor:
         # Запрашиваем данные из базы
-        cursor.execute('SELECT name, article, url, attrs FROM items')
+        today = datetime.datetime.now().date()
+        cursor.execute(
+            'SELECT name, article, url, attrs '
+            'FROM items '
+            'WHERE DATE(created_at) = %s',
+            (today,)
+        )
         data = cursor.fetchall()  # Получаем все строки
         # logging.info(data)
         # Проверяем, есть ли данные

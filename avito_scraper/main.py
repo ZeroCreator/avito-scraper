@@ -23,6 +23,8 @@ def main() -> None:
     logging.info(f"Запускаю парсинг")
 
     items = avito.parse(),
+    logging.info(f"Найдено {len(items)} товаров, генерирую файл...")
+
     # Проверяем, собраны ли товары
     if items and items[0] is not None:  # Если список не пуст
         logging.info(f"Найдено {len(items)} товаров, генерирую файл...")
@@ -31,6 +33,8 @@ def main() -> None:
         logging.warning("Товары не найдены, файл не будет создан.")
 
     logging.info(f"Парсинг завершен")
+
+    # create_and_send_file.gen_file()
 
 
 if __name__ == "__main__":
