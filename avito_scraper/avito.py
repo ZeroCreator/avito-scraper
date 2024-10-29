@@ -107,7 +107,7 @@ def get_json(url):
 
 def get_pages(url):
     page_urls = []  # по умолчанию возвращаем 0, если параметр отсутствует
-    for page in range(5):
+    for page in range(2, 5):
         page_url = f"{url}&p={page + 1}"
         print(f"Текущая страница: {page_url}")
         page_urls.append(page_url)
@@ -186,17 +186,21 @@ def get_products(url: str):
 
 def parse() -> None:
     """Запускает парсинг avito."""
-    items = []
     for url in settings.AVITO_URLS:
-        pages = get_pages(url)
-        for page in pages:
-            result = get_products(page)
-            items.append(result)
+        items = []  # Список для хранения товаров
+        for index in get_pages(url):
+            time.sleep(10)
+            result = get_products(index)
+            if result:
+                items.extend(result)  # Добавляем элементы из result в items
+                items = list(set(items))  # Преобразуем в set и обратно в list для удаления дубликатов
+                # Вставляем данные в базу после парсинга каждой страницы
+                if items:
+                    database.insert_items(items)  # Запись в базу после обработки каждой страницы
+                    logging.info(f"Добавлено товаров в базу: {len(items)}")
+                    items.clear()  # Очищаем список после вставки, чтобы не добавлять дубликаты
 
-    items = set(reduce(iconcat, items, []))
-    logging.info(f"Avito: всего товаров: {len(items)}")
+        logging.info(f"Avito: всего товаров добавлено: {len(items)}")
 
-    if items:
-        database.insert_items(items)
-    else:
-        logging.warning("Нет товаров для добавления в базу данных.")
+        if not items:
+            logging.warning("Нет товаров для добавления в базу данных.")
