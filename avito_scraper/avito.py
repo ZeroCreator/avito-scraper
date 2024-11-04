@@ -26,14 +26,14 @@ def get_pages(url):
     page_count = base.get_page_count(response)
 
     for page in range(page_count + 1):   # Добавляем еще одну страницу на всякий случай если во время парсинга были добавлены товары и страниц стало больше
-        page_url = f"{url}&localPriority=1&p={page + 1}"
+        page_url = f"{url}&p={page + 1}"
         logging.info(f"Добавляем страницу: {page_url}")
         page_urls.append(page_url)
 
     return page_urls
 
 
-def get_products(url: str):
+def get_products_pages(url: str):
     logging.info(f"Запускаю страницу {url}")
     response_text = base.repeat_parsing(url)
     # Получаем строку с данными
@@ -45,14 +45,18 @@ def get_products(url: str):
         logging.info("JSON не сформирован")
         return []
 
-    products = base.find_value_by_key(products_data, "items")
+    products_pages = base.find_value_by_key(products_data, "items")
 
-    if not products:
+    if not products_pages:
         logging.info("Товаров items в JSON нет")
         return []
 
+    return products_pages
+
+
+def get_products(products_pages):
     items = []
-    for product in products:
+    for product in products_pages:
         # Проверяем наличие urlPath
         item_url_data = product.get('urlPath')
         if item_url_data:
@@ -167,21 +171,23 @@ def get_products(url: str):
 def parse() -> set[Any]:
     """Запускает парсинг avito."""
     items = []
+    products_pages = []
 
     for url in settings.AVITO_URLS:
         logging.info(f"Собираем товары с каталога {url}")
         pages_url = get_pages(url)
         for page_url in pages_url:
-            time_sleep = base.get_random_sleep()
-            logging.info(f"Спим : {time_sleep}")
-            time.sleep(time_sleep)
-            result = get_products(page_url)
+            result = get_products_pages(page_url)
+
             if result:
-                items.append(result)
+                products_pages.extend(result)
+                logging.info(f"Со страницы собрано {len(result)} товаров")
             else:
                 logging.info(f"Товаров со страницы {page_url} не найдено")
                 continue
 
+        logging.info(f"Всего товаров: {len(products_pages)}")
+        items = get_products(products_pages)
         # Объединяем все найденные товары и удаляем дубликаты
         items = set(reduce(iconcat, items, []))
         logging.info(f"Avito: всего товаров: {len(items)}")

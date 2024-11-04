@@ -31,8 +31,9 @@ def get_response(url, proxy):
 
 
 def get_random_sleep():
-    delay = random.uniform(30, 60)  # Случайное десятичное число от 0 до 3
-    return delay
+    delay = random.uniform(30, 60)
+    logging.info(f"Спим : {delay}")
+    return time.sleep(delay)
 
 
 def repeat_parsing(url):
@@ -40,9 +41,7 @@ def repeat_parsing(url):
     for attempt in range(5):
         proxy = get_proxy()
         logging.info(f"Используем прокси: {proxy}")
-        time_sleep = get_random_sleep()
-        logging.info(f"Спим : {time_sleep}")
-        time.sleep(time_sleep)
+        get_random_sleep()
 
         try:
             response = get_response(url, proxy)
